@@ -318,7 +318,7 @@
         <li><a href="doctor" class="active"><i class="fas fa-user-md"></i> <span>Doctores</span></a></li>
         <li><a href="cita"><i class="fas fa-calendar-check"></i> <span>Citas</span></a></li>
         <li><a href="factura"><i class="fas fa-file-invoice-dollar"></i> <span>Facturas</span></a></li>
-        <li><a href="#"><i class="fas fa-pills"></i> <span>Medicamentos</span></a></li>
+        <a href="medicamentos"><i class="fas fa-pills"></i> <span>Medicamentos</span></a></li>
 
         <li class="logout">
             <a href="login.jsp"><i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span></a>

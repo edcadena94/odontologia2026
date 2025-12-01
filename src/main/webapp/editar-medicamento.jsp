@@ -1,17 +1,25 @@
 <%--
   Created by IntelliJ IDEA.
   User: erick
-  Date: 28/11/2025
-  Time: 14:29
+  Date: 30/11/2025
+  Time: 13:38
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.odontologia.models.Medicamentos" %>
+<%
+    Medicamentos medicamento = (Medicamentos) request.getAttribute("medicamento");
+    if (medicamento == null) {
+        response.sendRedirect("medicamentos?error=not_found");
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Paciente - Esthetyc Dental Studio</title>
+    <title>Editar Medicamento - Esthetyc Dental Studio</title>
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -179,22 +187,37 @@
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             padding: 40px;
-            max-width: 800px;
+            max-width: 600px;
         }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
+        .medicamento-info {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .medicamento-info i {
+            font-size: 40px;
+            opacity: 0.8;
+        }
+
+        .medicamento-info div h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .medicamento-info div span {
+            opacity: 0.9;
+            font-size: 14px;
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group.full-width {
-            grid-column: span 2;
+            margin-bottom: 25px;
         }
 
         .form-group label {
@@ -205,17 +228,11 @@
             font-size: 14px;
         }
 
-        .form-group label i {
-            color: var(--primary);
-            margin-right: 8px;
-        }
-
         .form-group label .required {
             color: var(--danger);
         }
 
         .form-group input,
-        .form-group select,
         .form-group textarea {
             width: 100%;
             padding: 14px 18px;
@@ -227,7 +244,6 @@
         }
 
         .form-group input:focus,
-        .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: var(--primary);
@@ -236,7 +252,30 @@
 
         .form-group textarea {
             resize: vertical;
-            min-height: 80px;
+            min-height: 100px;
+        }
+
+        .form-group .input-icon {
+            position: relative;
+        }
+
+        .form-group .input-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        .form-group .input-icon input {
+            padding-left: 45px;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: var(--gray);
+            font-size: 12px;
         }
 
         /* ========== BOTONES ========== */
@@ -244,12 +283,10 @@
             display: flex;
             gap: 15px;
             margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #f0f0f0;
-            justify-content: flex-end;
         }
 
         .btn-guardar {
+            flex: 1;
             padding: 15px 30px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
@@ -261,6 +298,7 @@
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
         }
 
@@ -282,6 +320,7 @@
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
         }
 
@@ -297,12 +336,6 @@
             display: flex;
             align-items: center;
             gap: 12px;
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            color: var(--success);
-            border: 1px solid #a7f3d0;
         }
 
         .alert-error {
@@ -341,14 +374,6 @@
                 padding: 25px;
             }
 
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-group.full-width {
-                grid-column: span 1;
-            }
-
             .form-actions {
                 flex-direction: column;
             }
@@ -367,11 +392,11 @@
 
     <ul class="nav-menu">
         <li><a href="index.jsp"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-        <li><a href="pacientes" class="active"><i class="fas fa-users"></i> <span>Pacientes</span></a></li>
+        <li><a href="pacientes"><i class="fas fa-users"></i> <span>Pacientes</span></a></li>
         <li><a href="doctor"><i class="fas fa-user-md"></i> <span>Doctores</span></a></li>
         <li><a href="cita"><i class="fas fa-calendar-check"></i> <span>Citas</span></a></li>
         <li><a href="factura"><i class="fas fa-file-invoice-dollar"></i> <span>Facturas</span></a></li>
-        <li><a href="medicamentos"><i class="fas fa-pills"></i> <span>Medicamentos</span></a></li>
+        <li><a href="medicamentos" class="active"><i class="fas fa-pills"></i> <span>Medicamentos</span></a></li>
 
         <li class="logout">
             <a href="login.jsp"><i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span></a>
@@ -383,106 +408,78 @@
 <main class="main-content">
     <!-- Header de página -->
     <div class="page-header">
-        <h1><i class="fas fa-user-plus"></i> Registrar Nuevo Paciente</h1>
-        <a href="pacientes" class="btn-volver">
+        <h1><i class="fas fa-edit"></i> Editar Medicamento</h1>
+        <a href="medicamentos" class="btn-volver">
             <i class="fas fa-arrow-left"></i> Volver a la lista
         </a>
     </div>
 
-    <!-- Mensaje de error -->
-    <% if (request.getParameter("error") != null) { %>
-    <div class="alert alert-error">
-        <i class="fas fa-exclamation-circle"></i>
-        <% if ("campos_vacios".equals(request.getParameter("error"))) { %>
-        Por favor complete todos los campos obligatorios.
-        <% } else if ("cedula_existe".equals(request.getParameter("error"))) { %>
-        Ya existe un paciente con esa cédula.
-        <% } else { %>
-        Ocurrió un error al registrar el paciente.
-        <% } %>
-    </div>
-    <% } %>
-
     <!-- Formulario -->
     <div class="form-container">
-        <form action="pacientes" method="POST">
-            <input type="hidden" name="accion" value="crear">
 
-            <div class="form-grid">
-                <!-- Cédula -->
-                <div class="form-group">
-                    <label><i class="fas fa-id-card"></i> Cédula <span class="required">*</span></label>
-                    <input type="text" name="cedula" required maxlength="10"
-                           placeholder="Ej: 1234567890">
-                </div>
+        <!-- Info del medicamento -->
+        <div class="medicamento-info">
+            <i class="fas fa-pills"></i>
+            <div>
+                <h3><%= medicamento.getNombre() %></h3>
+                <span>ID: <%= medicamento.getIdMedicamento() %></span>
+            </div>
+        </div>
 
-                <!-- Nombre -->
-                <div class="form-group">
-                    <label><i class="fas fa-user"></i> Nombre <span class="required">*</span></label>
-                    <input type="text" name="nombre" required
-                           placeholder="Nombre del paciente">
-                </div>
+        <!-- Mensaje de error -->
+        <% if (request.getParameter("error") != null) { %>
+        <div class="alert alert-error">
+            <i class="fas fa-exclamation-circle"></i>
+            <% if ("campos_vacios".equals(request.getParameter("error"))) { %>
+            Por favor complete todos los campos obligatorios.
+            <% } else { %>
+            Ocurrió un error al actualizar el medicamento.
+            <% } %>
+        </div>
+        <% } %>
 
-                <!-- Apellido -->
-                <div class="form-group">
-                    <label><i class="fas fa-user"></i> Apellido <span class="required">*</span></label>
-                    <input type="text" name="apellido" required
-                           placeholder="Apellido del paciente">
-                </div>
+        <form action="medicamentos" method="POST">
+            <input type="hidden" name="accion" value="actualizar">
+            <input type="hidden" name="id" value="<%= medicamento.getIdMedicamento() %>">
 
-                <!-- Fecha de Nacimiento -->
-                <div class="form-group">
-                    <label><i class="fas fa-calendar"></i> Fecha de Nacimiento</label>
-                    <input type="date" name="fechaNacimiento">
+            <!-- Nombre -->
+            <div class="form-group">
+                <label for="nombre">Nombre del Medicamento <span class="required">*</span></label>
+                <div class="input-icon">
+                    <i class="fas fa-pills"></i>
+                    <input type="text" id="nombre" name="nombre" required
+                           value="<%= medicamento.getNombre() != null ? medicamento.getNombre() : "" %>"
+                           placeholder="Ej: Ibuprofeno 400mg">
                 </div>
+            </div>
 
-                <!-- Género -->
-                <div class="form-group">
-                    <label><i class="fas fa-venus-mars"></i> Género</label>
-                    <select name="genero">
-                        <option value="">Seleccione...</option>
-                        <option value="Masculino">Masculino</option>
-                        <option value="Femenino">Femenino</option>
-                        <option value="Otro">Otro</option>
-                    </select>
-                </div>
+            <!-- Descripción -->
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                <textarea id="descripcion" name="descripcion"
+                          placeholder="Descripción del medicamento, indicaciones, etc."><%= medicamento.getDescripcion() != null ? medicamento.getDescripcion() : "" %></textarea>
+                <small>Opcional: Agregue detalles sobre el uso o composición del medicamento.</small>
+            </div>
 
-                <!-- Teléfono -->
-                <div class="form-group">
-                    <label><i class="fas fa-phone"></i> Teléfono <span class="required">*</span></label>
-                    <input type="tel" name="telefono" required
-                           placeholder="Ej: 0991234567">
+            <!-- Stock -->
+            <div class="form-group">
+                <label for="stock">Stock Actual <span class="required">*</span></label>
+                <div class="input-icon">
+                    <i class="fas fa-boxes"></i>
+                    <input type="number" id="stock" name="stock" required
+                           min="0" value="<%= medicamento.getStock() %>"
+                           placeholder="Cantidad en inventario">
                 </div>
-
-                <!-- Email -->
-                <div class="form-group">
-                    <label><i class="fas fa-envelope"></i> Email</label>
-                    <input type="email" name="email"
-                           placeholder="correo@ejemplo.com">
-                </div>
-
-                <!-- Dirección -->
-                <div class="form-group">
-                    <label><i class="fas fa-map-marker-alt"></i> Dirección</label>
-                    <input type="text" name="direccion"
-                           placeholder="Dirección del paciente">
-                </div>
-
-                <!-- Alergias -->
-                <div class="form-group full-width">
-                    <label><i class="fas fa-allergies"></i> Alergias</label>
-                    <textarea name="alergias"
-                              placeholder="Describa las alergias del paciente (si tiene)"></textarea>
-                </div>
+                <small>Cantidad de unidades disponibles en el inventario.</small>
             </div>
 
             <!-- Botones -->
             <div class="form-actions">
-                <a href="pacientes" class="btn-cancelar">
+                <a href="medicamentos" class="btn-cancelar">
                     <i class="fas fa-times"></i> Cancelar
                 </a>
                 <button type="submit" class="btn-guardar">
-                    <i class="fas fa-save"></i> Registrar Paciente
+                    <i class="fas fa-save"></i> Guardar Cambios
                 </button>
             </div>
         </form>

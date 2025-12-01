@@ -85,7 +85,7 @@
         <li><a href="panelDoctor.jsp" class="active"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
         <li><a href="pacientes"><i class="fas fa-users"></i> <span>Mis Pacientes</span></a></li>
         <li><a href="cita"><i class="fas fa-calendar-check"></i> <span>Mis Citas</span></a></li>
-        <li><a href="#"><i class="fas fa-pills"></i> <span>Medicamentos</span></a></li>
+        <a href="medicamentos"><i class="fas fa-pills"></i> <span>Medicamentos</span></a></li>
 
         <li class="logout">
             <a href="login.jsp"><i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span></a>

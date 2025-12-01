@@ -40,8 +40,7 @@ public class CitaServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Error al cargar los datos: " + e.getMessage());
-            request.getRequestDispatcher("/error.jsp").forward(request, response);
+            response.sendRedirect("error.jsp");
         }
     }
 
@@ -50,28 +49,51 @@ public class CitaServlet extends HttpServlet {
             throws IOException {
 
         try (Connection conn = Conexion.getConnection()) {
-            int idPaciente = Integer.parseInt(request.getParameter("idPaciente"));
-            int idDoctor = Integer.parseInt(request.getParameter("idDoctor"));
-            LocalDate fecha = LocalDate.parse(request.getParameter("fecha"));
-            LocalTime hora = LocalTime.parse(request.getParameter("hora"));
+            // Obtener parámetros del formulario
+            String idPacienteStr = request.getParameter("idPaciente");
+            String idDoctorStr = request.getParameter("idDoctor");
+            String fechaStr = request.getParameter("fecha");
+            String horaStr = request.getParameter("hora");
             String motivo = request.getParameter("motivo");
 
+            // Validar campos obligatorios
+            if (idPacienteStr == null || idPacienteStr.isEmpty() ||
+                    idDoctorStr == null || idDoctorStr.isEmpty() ||
+                    fechaStr == null || fechaStr.isEmpty() ||
+                    horaStr == null || horaStr.isEmpty()) {
+
+                response.sendRedirect("cita?error=campos_vacios");
+                return;
+            }
+
+            // Convertir valores
+            int idPaciente = Integer.parseInt(idPacienteStr);
+            int idDoctor = Integer.parseInt(idDoctorStr);
+            LocalDate fecha = LocalDate.parse(fechaStr);
+            LocalTime hora = LocalTime.parse(horaStr);
+
+            // Crear objeto Cita
             Cita cita = new Cita();
             cita.setIdPaciente(idPaciente);
             cita.setIdDoctor(idDoctor);
             cita.setFecha(fecha);
             cita.setHora(hora);
-            cita.setMotivo(motivo);
+            cita.setMotivo(motivo != null ? motivo.trim() : "");
+            cita.setEstado("Pendiente");
 
+            // Guardar cita
             CitaService citaService = new CitaServiceJdbcImplement(conn);
             boolean guardado = citaService.agendarCita(cita);
 
             if (guardado) {
-                response.sendRedirect("cita?success=true");
+                response.sendRedirect("cita?success=created");
             } else {
-                response.sendRedirect("cita?error=true");
+                response.sendRedirect("cita?error=no_guardado");
             }
 
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            response.sendRedirect("cita?error=datos_invalidos");
         } catch (Exception e) {
             e.printStackTrace();
             response.sendRedirect("cita?error=true");

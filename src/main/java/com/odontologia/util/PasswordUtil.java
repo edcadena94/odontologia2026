@@ -90,7 +90,7 @@ public class PasswordUtil {
     /**
      * Genera una contraseña aleatoria segura
      * Útil para reseteos de contraseña
-     *
+     *9
      * @return Contraseña aleatoria de 12 caracteres
      */
     public static String generateRandomPassword() {
@@ -102,4 +102,4 @@ public class PasswordUtil {
         }
         return sb.toString();
     }
-}
+}9

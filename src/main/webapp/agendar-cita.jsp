@@ -1,10 +1,3 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: erick
-  Date: 28/11/2025
-  Time: 14:36
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.odontologia.models.Paciente" %>
@@ -38,6 +31,7 @@
             --gray: #888888;
             --text: #333333;
             --success: #059669;
+            --danger: #dc2626;
         }
 
         body {
@@ -168,33 +162,36 @@
             border-radius: 10px;
             font-weight: 500;
             transition: all 0.3s ease;
+            border: 1px solid #ddd;
         }
 
         .btn-volver:hover {
             background: #e0e0e0;
         }
 
-        /* ========== MENSAJE EXITO ========== */
+        /* ========== MENSAJES ========== */
         .success-message {
             background: #d1fae5;
-            color: #059669;
+            color: var(--success);
             padding: 15px 20px;
             border-radius: 10px;
             margin-bottom: 25px;
             display: flex;
             align-items: center;
             gap: 10px;
+            border: 1px solid #a7f3d0;
         }
 
         .error-message {
             background: #fee2e2;
-            color: #dc2626;
+            color: var(--danger);
             padding: 15px 20px;
             border-radius: 10px;
             margin-bottom: 25px;
             display: flex;
             align-items: center;
             gap: 10px;
+            border: 1px solid #fecaca;
         }
 
         /* ========== FORMULARIO ========== */
@@ -203,6 +200,7 @@
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             padding: 40px;
+            max-width: 800px;
         }
 
         .form-grid {
@@ -230,6 +228,10 @@
         .form-group label i {
             color: var(--primary);
             margin-right: 8px;
+        }
+
+        .form-group label .required {
+            color: var(--danger);
         }
 
         .form-group input,
@@ -294,6 +296,7 @@
         .btn-secondary {
             background: var(--gray-light);
             color: var(--text);
+            border: 1px solid #ddd;
         }
 
         .btn-secondary:hover {
@@ -333,6 +336,10 @@
                 flex-direction: column;
                 gap: 15px;
             }
+
+            .form-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -352,7 +359,7 @@
         <li><a href="doctor"><i class="fas fa-user-md"></i> <span>Doctores</span></a></li>
         <li><a href="cita" class="active"><i class="fas fa-calendar-check"></i> <span>Citas</span></a></li>
         <li><a href="factura"><i class="fas fa-file-invoice-dollar"></i> <span>Facturas</span></a></li>
-        <li><a href="#"><i class="fas fa-pills"></i> <span>Medicamentos</span></a></li>
+        <li><a href="medicamentos"><i class="fas fa-pills"></i> <span>Medicamentos</span></a></li>
 
         <li class="logout">
             <a href="login.jsp"><i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span></a>
@@ -371,27 +378,29 @@
     </div>
 
     <!-- Mensajes -->
-        <% if (request.getParameter("success") != null) { %>
+    <% if (request.getParameter("success") != null) { %>
     <div class="success-message">
         <i class="fas fa-check-circle"></i>
         ¡Cita agendada exitosamente!
     </div>
-        <% } %>
+    <% } %>
 
-        <% if (request.getParameter("error") != null) { %>
+    <% if (request.getParameter("error") != null) { %>
     <div class="error-message">
         <i class="fas fa-exclamation-circle"></i>
-        Error al agendar la cita. Intente nuevamente.
+        Error al agendar la cita. Verifique los datos e intente nuevamente.
     </div>
-        <% } %>
+    <% } %>
 
     <!-- Formulario -->
     <div class="form-container">
         <form action="cita" method="POST">
+            <input type="hidden" name="accion" value="crear">
+
             <div class="form-grid">
                 <!-- Paciente -->
                 <div class="form-group">
-                    <label><i class="fas fa-user"></i> Paciente</label>
+                    <label><i class="fas fa-user"></i> Paciente <span class="required">*</span></label>
                     <select name="idPaciente" required>
                         <option value="">Seleccione un paciente...</option>
                         <%
@@ -409,7 +418,7 @@
 
                 <!-- Doctor -->
                 <div class="form-group">
-                    <label><i class="fas fa-user-md"></i> Doctor</label>
+                    <label><i class="fas fa-user-md"></i> Doctor <span class="required">*</span></label>
                     <select name="idDoctor" required>
                         <option value="">Seleccione un doctor...</option>
                         <%
@@ -427,6 +436,35 @@
 
                 <!-- Fecha -->
                 <div class="form-group">
-                    <label><i class="fas fa-calendar"></i> Fecha</label>
+                    <label><i class="fas fa-calendar"></i> Fecha <span class="required">*</span></label>
                     <input type="date" name="fecha" required>
                 </div>
+
+                <!-- Hora -->
+                <div class="form-group">
+                    <label><i class="fas fa-clock"></i> Hora <span class="required">*</span></label>
+                    <input type="time" name="hora" required>
+                </div>
+
+                <!-- Motivo -->
+                <div class="form-group full-width">
+                    <label><i class="fas fa-notes-medical"></i> Motivo de la Cita</label>
+                    <textarea name="motivo" placeholder="Describa el motivo de la consulta..."></textarea>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="form-buttons">
+                <a href="index.jsp" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-calendar-check"></i> Agendar Cita
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+</body>
+</html>
