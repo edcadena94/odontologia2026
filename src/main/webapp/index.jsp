@@ -1,26 +1,21 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: erick
-  Date: 17/11/2025
-  Time: 10:00
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.odontologia.models.Usuario" %>
+<%
+    // Obtener el usuario de la sesión
+    Usuario usuario = (Usuario) session.getAttribute("usuario");
+    String username = usuario != null ? usuario.getUsername() : "Usuario";
+    String rol = usuario != null ? usuario.getRolDescripcion() : "Rol";
+%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio - Esthetyc Dental Studio</title>
-
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* ========== RESET Y VARIABLES ========== */
         * {
             margin: 0;
             padding: 0;
@@ -43,7 +38,6 @@
             min-height: 100vh;
         }
 
-        /* ========== SIDEBAR (MENU LATERAL) ========== */
         .sidebar {
             position: fixed;
             left: 0;
@@ -81,7 +75,6 @@
             font-size: 12px;
         }
 
-        /* ========== MENU DE NAVEGACION ========== */
         .nav-menu {
             list-style: none;
             padding: 0 15px;
@@ -130,13 +123,11 @@
             color: #fecaca;
         }
 
-        /* ========== CONTENIDO PRINCIPAL ========== */
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
 
-        /* ========== HEADER ========== */
         .header {
             display: flex;
             justify-content: space-between;
@@ -183,7 +174,6 @@
             font-size: 12px;
         }
 
-        /* ========== TARJETAS DE ESTADISTICAS ========== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -248,7 +238,6 @@
             font-size: 14px;
         }
 
-        /* ========== ACCIONES RAPIDAS ========== */
         .quick-actions {
             background: var(--white);
             padding: 30px;
@@ -300,7 +289,6 @@
             font-size: 14px;
         }
 
-        /* ========== RESPONSIVE ========== */
         @media (max-width: 992px) {
             .sidebar {
                 width: 80px;
@@ -333,7 +321,6 @@
 </head>
 <body>
 
-<!-- ========== SIDEBAR ========== -->
 <nav class="sidebar">
     <div class="sidebar-header">
         <i class="fas fa-tooth"></i>
@@ -355,15 +342,13 @@
     </ul>
 </nav>
 
-<!-- ========== CONTENIDO PRINCIPAL ========== -->
 <main class="main-content">
-    <!-- Header -->
     <div class="header">
         <h1>Dashboard</h1>
         <div class="user-info">
             <div>
-                <span><%= session.getAttribute("usuario") != null ? session.getAttribute("usuario") : "Usuario" %></span><br>
-                <small><%= session.getAttribute("rol") != null ? session.getAttribute("rol") : "Rol" %></small>
+                <span><%= username %></span><br>
+                <small><%= rol %></small>
             </div>
             <div class="avatar">
                 <i class="fas fa-user"></i>
@@ -371,7 +356,6 @@
         </div>
     </div>
 
-    <!-- Tarjetas de estadísticas -->
     <div class="stats-grid">
         <div class="stat-card pacientes">
             <div class="icon"><i class="fas fa-users"></i></div>
@@ -406,7 +390,6 @@
         </div>
     </div>
 
-    <!-- Acciones rápidas -->
     <div class="quick-actions">
         <h2>Acciones Rápidas</h2>
         <div class="actions-grid">
@@ -432,4 +415,3 @@
 
 </body>
 </html>
-

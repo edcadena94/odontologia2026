@@ -1,127 +1,121 @@
 package com.odontologia.repositories;
 
-// Importamos el modelo Paciente
 import com.odontologia.models.Paciente;
-
-// Importamos las clases de SQL necesarias
 import java.sql.*;
-// Importamos ArrayList para crear listas
+import java.time.LocalDate;
 import java.util.ArrayList;
-// Importamos Date para manejar fechas
-import java.util.Date;
-// Importamos List como tipo de retorno
 import java.util.List;
 
 /**
  * CLASE PACIENTE REPOSITORY
- *
- * PARA QUE SIRVE:
- * - Esta clase se encarga de comunicarse con la BASE DE DATOS
- * - Realiza todas las operaciones CRUD para la tabla "pacientes"
- * - CRUD = Create (crear), Read (leer), Update (actualizar), Delete (eliminar)
- *
- * PATRON USADO: Repository Pattern
- * - Separa la logica de acceso a datos de la logica de negocio
+ * 
+ * CAMBIO IMPORTANTE: La cédula es ahora la clave primaria (no auto-increment)
+ * - ANTES: id_paciente INT AUTO_INCREMENT
+ * - AHORA: cedula VARCHAR(10) PRIMARY KEY
  */
 public class PacienteRepository {
 
-    // ========== ATRIBUTO ==========
-
-    /**
-     * Conexion a la base de datos
-     * Se recibe en el constructor y se usa en todos los metodos
-     */
     private final Connection conn;
 
-    // ========== CONSTRUCTOR ==========
-
-    /**
-     * Constructor que recibe la conexion a la base de datos
-     *
-     * @param conn Conexion activa a MySQL
-     *
-     * Ejemplo de uso:
-     * Connection conn = Conexion.getConnection();
-     * PacienteRepository repo = new PacienteRepository(conn);
-     */
     public PacienteRepository(Connection conn) {
         this.conn = conn;
     }
 
-    // ========== METODO GUARDAR (INSERT o UPDATE) ==========
+
+    // ========== MÉTODO GUARDAR ==========
 
     /**
      * Guarda un paciente en la base de datos
-     * Si el paciente NO tiene ID -> hace INSERT (nuevo paciente)
-     * Si el paciente SI tiene ID -> hace UPDATE (actualizar paciente)
-     *
-     * @param paciente El paciente a guardar
-     * @return true si se guardo correctamente, false si hubo error
+     * 
+     * CAMBIO: Ahora usa INSERT con cédula como PK
+     * Ya NO se usa UPDATE porque la cédula no cambia
      */
     public boolean guardar(Paciente paciente) {
-        String sql;
+        // SQL actualizado con los nuevos campos
+        String sql = "INSERT INTO paciente (cedula, nombre, apellido, fecha_nacimiento, " +
+                     "genero, telefono, email, direccion, alergias, antecedentes_medicos, estado) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        // Verificamos si es un INSERT o un UPDATE
-        if ((paciente.getIdPaciente() == null) || (paciente.getIdPaciente() == 0)) {
-            // Es un NUEVO paciente -> INSERT
-            sql = "INSERT INTO pacientes (nombre, apellido, fecha_nacimiento, sexo, direccion, telefono, email) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        } else {
-            // Es un paciente EXISTENTE -> UPDATE
-            sql = "UPDATE pacientes SET nombre = ?, apellido = ?, fecha_nacimiento = ?, sexo = ?, direccion = ?, telefono = ?, email = ? WHERE id_paciente = ?";
-        }
-
-        // Ejecutamos la consulta SQL
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            // Establecemos los valores de los parametros (los ?)
-            stmt.setString(1, paciente.getNombre());
-            stmt.setString(2, paciente.getApellido());
-            stmt.setDate(3, new java.sql.Date(paciente.getFechaNacimiento().getTime()));
-            stmt.setString(4, String.valueOf(paciente.getSexo()));
-            stmt.setString(5, paciente.getDireccion());
+            stmt.setString(1, paciente.getCedula());
+            stmt.setString(2, paciente.getNombre());
+            stmt.setString(3, paciente.getApellido());
+            
+            // fecha_nacimiento puede ser NULL
+            if (paciente.getFechaNacimiento() != null) {
+                stmt.setDate(4, Date.valueOf(paciente.getFechaNacimiento()));
+            } else {
+                stmt.setNull(4, Types.DATE);
+            }
+            
+            stmt.setString(5, paciente.getGenero());
             stmt.setString(6, paciente.getTelefono());
             stmt.setString(7, paciente.getEmail());
+            stmt.setString(8, paciente.getDireccion());
+            stmt.setString(9, paciente.getAlergias());
+            stmt.setString(10, paciente.getAntecedentesMedicos());
+            stmt.setString(11, paciente.getEstado() != null ? paciente.getEstado() : "ACTIVO");
 
-            // Si es UPDATE, agregamos el ID como parametro 8
-            if (paciente.getIdPaciente() != null && paciente.getIdPaciente() > 0) {
-                stmt.setInt(8, paciente.getIdPaciente());
-            }
-
-            // Ejecutamos y verificamos si afecto alguna fila
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            // Si hay error, lo imprimimos y retornamos false
             e.printStackTrace();
             return false;
         }
     }
 
-    // ========== METODO ACTUALIZAR ==========
+
+    // ========== MÉTODO ACTUALIZAR ==========
 
     /**
      * Actualiza un paciente existente
-     * Es un alias para guardar() cuando el paciente ya tiene ID
-     *
-     * @param paciente El paciente a actualizar
-     * @return true si se actualizo correctamente
+     * La cédula NO se actualiza (es la PK)
      */
     public boolean actualizar(Paciente paciente) {
-        return guardar(paciente);
-    }
-
-    // ========== METODO ELIMINAR ==========
-
-    /**
-     * Elimina un paciente de la base de datos por su ID
-     *
-     * @param id El ID del paciente a eliminar
-     * @return true si se elimino correctamente, false si hubo error
-     */
-    public boolean eliminar(int id) {
-        String sql = "DELETE FROM pacientes WHERE id_paciente = ?";
+        String sql = "UPDATE paciente SET nombre = ?, apellido = ?, fecha_nacimiento = ?, " +
+                     "genero = ?, telefono = ?, email = ?, direccion = ?, " +
+                     "alergias = ?, antecedentes_medicos = ?, estado = ? " +
+                     "WHERE cedula = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
+            stmt.setString(1, paciente.getNombre());
+            stmt.setString(2, paciente.getApellido());
+            
+            if (paciente.getFechaNacimiento() != null) {
+                stmt.setDate(3, Date.valueOf(paciente.getFechaNacimiento()));
+            } else {
+                stmt.setNull(3, Types.DATE);
+            }
+            
+            stmt.setString(4, paciente.getGenero());
+            stmt.setString(5, paciente.getTelefono());
+            stmt.setString(6, paciente.getEmail());
+            stmt.setString(7, paciente.getDireccion());
+            stmt.setString(8, paciente.getAlergias());
+            stmt.setString(9, paciente.getAntecedentesMedicos());
+            stmt.setString(10, paciente.getEstado() != null ? paciente.getEstado() : "ACTIVO");
+            stmt.setString(11, paciente.getCedula()); // WHERE cedula = ?
+
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    // ========== MÉTODO ELIMINAR ==========
+
+    /**
+     * Elimina un paciente por su cédula
+     * CAMBIO: Antes era por ID (int), ahora por cédula (String)
+     */
+    public boolean eliminar(String cedula) {
+        String sql = "DELETE FROM paciente WHERE cedula = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, cedula);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -129,22 +123,20 @@ public class PacienteRepository {
         }
     }
 
-    // ========== METODO BUSCAR POR ID ==========
+
+    // ========== MÉTODO BUSCAR POR CÉDULA ==========
 
     /**
-     * Busca un paciente por su ID
-     *
-     * @param id El ID del paciente a buscar
-     * @return El paciente encontrado o null si no existe
+     * Busca un paciente por su cédula (PK)
+     * CAMBIO: Antes era buscarPorId(int), ahora es buscarPorCedula(String)
      */
-    public Paciente buscarPorId(int id) {
-        String sql = "SELECT * FROM pacientes WHERE id_paciente = ?";
+    public Paciente buscarPorCedula(String cedula) {
+        String sql = "SELECT * FROM paciente WHERE cedula = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
+            stmt.setString(1, cedula);
             ResultSet rs = stmt.executeQuery();
 
-            // Si encontramos un resultado, lo mapeamos a un objeto Paciente
             if (rs.next()) {
                 return mapearPaciente(rs);
             }
@@ -154,22 +146,34 @@ public class PacienteRepository {
         return null;
     }
 
-    // ========== METODO OBTENER TODOS ==========
+    /**
+     * ALIAS para compatibilidad con código anterior
+     * Antes: buscarPorId(int)
+     * Ahora: buscarPorId(String) llama a buscarPorCedula
+     */
+    @Deprecated
+    public Paciente buscarPorId(int id) {
+        // Ya no se usa, pero mantenemos para compatibilidad
+        return null;
+    }
+
+    public Paciente buscarPorId(String cedula) {
+        return buscarPorCedula(cedula);
+    }
+
+
+    // ========== MÉTODO OBTENER TODOS ==========
 
     /**
-     * Obtiene todos los pacientes de la base de datos
-     * Los ordena por nombre y apellido
-     *
-     * @return Lista con todos los pacientes
+     * Obtiene todos los pacientes
      */
     public List<Paciente> obtenerTodos() {
         List<Paciente> pacientes = new ArrayList<>();
-        String sql = "SELECT * FROM pacientes ORDER BY nombre, apellido";
+        String sql = "SELECT * FROM paciente WHERE estado = 'ACTIVO' ORDER BY nombre, apellido";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             ResultSet rs = stmt.executeQuery();
 
-            // Recorremos todos los resultados y los agregamos a la lista
             while (rs.next()) {
                 pacientes.add(mapearPaciente(rs));
             }
@@ -179,21 +183,18 @@ public class PacienteRepository {
         return pacientes;
     }
 
-    // ========== METODO BUSCAR POR NOMBRE ==========
+
+    // ========== MÉTODO BUSCAR POR NOMBRE ==========
 
     /**
-     * Busca pacientes cuyo nombre o apellido contenga el texto buscado
-     * Usa LIKE para busqueda parcial
-     *
-     * @param nombre Texto a buscar en nombre o apellido
-     * @return Lista de pacientes que coinciden
+     * Busca pacientes por nombre o apellido
      */
     public List<Paciente> buscarPorNombre(String nombre) {
         List<Paciente> pacientes = new ArrayList<>();
-        String sql = "SELECT * FROM pacientes WHERE nombre LIKE ? OR apellido LIKE ? ORDER BY nombre, apellido";
+        String sql = "SELECT * FROM paciente WHERE (nombre LIKE ? OR apellido LIKE ?) " +
+                     "AND estado = 'ACTIVO' ORDER BY nombre, apellido";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            // Agregamos % para busqueda parcial (contiene)
             String busqueda = "%" + nombre + "%";
             stmt.setString(1, busqueda);
             stmt.setString(2, busqueda);
@@ -208,67 +209,37 @@ public class PacienteRepository {
         return pacientes;
     }
 
-    // ========== METODO BUSCAR POR FECHA NACIMIENTO ==========
+
+    // ========== MÉTODO VERIFICAR SI EXISTE CÉDULA ==========
 
     /**
-     * Busca pacientes por su fecha de nacimiento exacta
-     *
-     * @param fecha La fecha de nacimiento a buscar
-     * @return Lista de pacientes con esa fecha
+     * Verifica si una cédula ya existe en la base de datos
+     * Útil para evitar duplicados al registrar
      */
-    public List<Paciente> buscarPorFechaNacimiento(Date fecha) {
-        List<Paciente> pacientes = new ArrayList<>();
-        String sql = "SELECT * FROM pacientes WHERE fecha_nacimiento = ?";
+    public boolean existeCedula(String cedula) {
+        String sql = "SELECT COUNT(*) FROM paciente WHERE cedula = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setDate(1, new java.sql.Date(fecha.getTime()));
+            stmt.setString(1, cedula);
             ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                pacientes.add(mapearPaciente(rs));
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return pacientes;
+        return false;
     }
 
-    // ========== METODO BUSCAR POR SEXO ==========
+
+    // ========== MÉTODO VERIFICAR EMAIL ==========
 
     /**
-     * Busca pacientes por sexo
-     *
-     * @param sexo 'M' para masculino, 'F' para femenino
-     * @return Lista de pacientes con ese sexo
-     */
-    public List<Paciente> buscarPorSexo(char sexo) {
-        List<Paciente> pacientes = new ArrayList<>();
-        String sql = "SELECT * FROM pacientes WHERE sexo = ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, String.valueOf(sexo));
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                pacientes.add(mapearPaciente(rs));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return pacientes;
-    }
-
-    // ========== METODO VERIFICAR EMAIL ==========
-
-    /**
-     * Verifica si un email ya existe en la base de datos
-     * Util para evitar emails duplicados al registrar
-     *
-     * @param email El email a verificar
-     * @return true si el email ya existe, false si no
+     * Verifica si un email ya existe
      */
     public boolean existeEmail(String email) {
-        String sql = "SELECT COUNT(*) FROM pacientes WHERE email = ?";
+        String sql = "SELECT COUNT(*) FROM paciente WHERE email = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, email);
@@ -283,15 +254,14 @@ public class PacienteRepository {
         return false;
     }
 
-    // ========== METODO CONTAR ==========
+
+    // ========== MÉTODO CONTAR ==========
 
     /**
-     * Cuenta el total de pacientes en la base de datos
-     *
-     * @return Numero total de pacientes
+     * Cuenta el total de pacientes activos
      */
     public int contar() {
-        String sql = "SELECT COUNT(*) FROM pacientes";
+        String sql = "SELECT COUNT(*) FROM paciente WHERE estado = 'ACTIVO'";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             ResultSet rs = stmt.executeQuery();
@@ -305,32 +275,39 @@ public class PacienteRepository {
         return 0;
     }
 
-    // ========== METODO PRIVADO: MAPEAR RESULTSET A PACIENTE ==========
+
+    // ========== MÉTODO PRIVADO: MAPEAR ==========
 
     /**
-     * METODO AUXILIAR PRIVADO
-     * Convierte una fila del ResultSet a un objeto Paciente
-     *
-     * @param rs ResultSet posicionado en una fila
-     * @return Objeto Paciente con los datos de esa fila
-     * @throws SQLException Si hay error al leer los datos
+     * Convierte ResultSet a objeto Paciente
+     * CAMBIO: Ahora mapea los nuevos campos
      */
     private Paciente mapearPaciente(ResultSet rs) throws SQLException {
         Paciente paciente = new Paciente();
 
-        // Extraemos cada columna y la asignamos al objeto
-        paciente.setIdPaciente(rs.getInt("id_paciente"));
+        paciente.setCedula(rs.getString("cedula"));
         paciente.setNombre(rs.getString("nombre"));
         paciente.setApellido(rs.getString("apellido"));
-        paciente.setFechaNacimiento(rs.getDate("fecha_nacimiento"));
-
-        // El sexo es un char, lo extraemos del String
-        String sexoStr = rs.getString("sexo");
-        paciente.setSexo(sexoStr != null ? sexoStr.charAt(0) : ' ');
-
-        paciente.setDireccion(rs.getString("direccion"));
+        
+        // Convertir java.sql.Date a LocalDate
+        Date fechaNac = rs.getDate("fecha_nacimiento");
+        if (fechaNac != null) {
+            paciente.setFechaNacimiento(fechaNac.toLocalDate());
+        }
+        
+        paciente.setGenero(rs.getString("genero"));
         paciente.setTelefono(rs.getString("telefono"));
         paciente.setEmail(rs.getString("email"));
+        paciente.setDireccion(rs.getString("direccion"));
+        paciente.setAlergias(rs.getString("alergias"));
+        paciente.setAntecedentesMedicos(rs.getString("antecedentes_medicos"));
+        paciente.setEstado(rs.getString("estado"));
+        
+        // fecha_registro
+        Timestamp fechaReg = rs.getTimestamp("fecha_registro");
+        if (fechaReg != null) {
+            paciente.setFechaRegistro(fechaReg.toLocalDateTime());
+        }
 
         return paciente;
     }

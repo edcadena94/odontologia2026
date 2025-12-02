@@ -1,108 +1,144 @@
 package com.odontologia.repositories;
 
-// Importamos el modelo Usuario
 import com.odontologia.models.Usuario;
-// Importamos nuestra clase de conexion
 import com.odontologia.util.Conexion;
-
-// Importamos las clases de SQL necesarias
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 
 /**
  * CLASE USUARIO REPOSITORY JDBC IMPLEMENT
- *
- * PARA QUE SIRVE:
- * - Esta clase IMPLEMENTA la interface UsuarioRepository
- * - Contiene el codigo real que se conecta a la base de datos
- * - "Jdbc" en el nombre indica que usa JDBC (Java Database Connectivity)
- * - "Implement" indica que es una implementacion de la interface
- *
- * RELACION CON LA INTERFACE:
- * - UsuarioRepository (interface) -> solo DECLARA el metodo encontrarPorUsername()
- * - UsuarioRepositoryJdbcImplement (clase) -> IMPLEMENTA el metodo con codigo real
- *
- * POR QUE "implements UsuarioRepository":
- * - Obliga a esta clase a tener todos los metodos de la interface
- * - Permite usar polimorfismo: UsuarioRepository repo = new UsuarioRepositoryJdbcImplement();
- *
- * COMO SE USA:
- * UsuarioRepository repo = new UsuarioRepositoryJdbcImplement();
- * Usuario usuario = repo.encontrarPorUsername("admin");
+ * 
+ * ACTUALIZACIÓN: Ahora lee los nuevos campos de la tabla usuario:
+ * - cedula_paciente (para usuarios tipo PACIENTE)
+ * - id_odontologo (para usuarios tipo DOCTOR)
+ * - estado (ACTIVO/INACTIVO)
+ * - ultimo_acceso
+ * - fecha_creacion
  */
 public class UsuarioRepositoryJdbcImplement implements UsuarioRepository {
 
     /**
      * Busca un usuario en la base de datos por su username
-     *
-     * FLUJO DEL METODO:
-     * 1. Abre una conexion a la base de datos
-     * 2. Ejecuta un SELECT para buscar el usuario
-     * 3. Si encuentra resultado, crea un objeto Usuario con los datos
-     * 4. Cierra la conexion automaticamente (try-with-resources)
-     * 5. Retorna el usuario encontrado o null si no existe
-     *
-     * @param username El nombre de usuario a buscar
-     * @return El usuario encontrado, o null si no existe
-     *
-     * EJEMPLO DE USO EN LOGIN:
-     * UsuarioRepository repo = new UsuarioRepositoryJdbcImplement();
-     * Usuario usuario = repo.encontrarPorUsername("admin");
-     *
-     * if (usuario != null && PasswordUtil.checkPassword("miPassword", usuario.getPasswordHash())) {
-     *     System.out.println("Login exitoso! Rol: " + usuario.getRol());
-     * } else {
-     *     System.out.println("Usuario o password incorrectos");
-     * }
+     * 
+     * CAMBIO: Ahora también trae los nuevos campos de la BD
      */
     @Override
     public Usuario encontrarPorUsername(String username) {
-        // Inicializamos el usuario como null
-        // Si no encontramos nada, retornaremos null
         Usuario usuario = null;
 
-        // Query SQL para buscar por username
-        // El ? es un parametro que se llena despues (evita SQL injection)
-        String sql = "SELECT * FROM Usuarios WHERE username = ?";
+        // SQL actualizado con los nuevos campos
+        String sql = "SELECT id_usuario, username, password_hash, rol, " +
+                     "cedula_paciente, id_odontologo, estado, " +
+                     "ultimo_acceso, fecha_creacion " +
+                     "FROM usuario WHERE username = ?";
 
-        // try-with-resources: abre conexion y PreparedStatement
-        // Se cierran automaticamente al terminar el bloque try
         try (Connection conn = Conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            // Establecemos el valor del parametro ?
-            // El 1 indica la posicion del primer ?
             stmt.setString(1, username);
-
-            // Ejecutamos la consulta SELECT
-            // ResultSet contiene los resultados
             ResultSet rs = stmt.executeQuery();
 
-            // rs.next() mueve el cursor al siguiente resultado
-            // Si hay un resultado, entra al if
             if (rs.next()) {
-                // Creamos un nuevo objeto Usuario
                 usuario = new Usuario();
-
-                // Extraemos cada columna del resultado y la asignamos
-                // rs.getInt("nombre_columna") -> obtiene valor entero
-                // rs.getString("nombre_columna") -> obtiene valor texto
-                usuario.setId(rs.getInt("id_usuario"));
+                
+                // Campos básicos (igual que antes)
+                usuario.setIdUsuario(rs.getInt("id_usuario"));
                 usuario.setUsername(rs.getString("username"));
                 usuario.setPasswordHash(rs.getString("password_hash"));
                 usuario.setRol(rs.getString("rol"));
+                
+                // NUEVOS CAMPOS
+                usuario.setCedulaPaciente(rs.getString("cedula_paciente"));
+                
+                // id_odontologo puede ser NULL
+                int idOdontologo = rs.getInt("id_odontologo");
+                if (!rs.wasNull()) {
+                    usuario.setIdOdontologo(idOdontologo);
+                }
+                
+                usuario.setEstado(rs.getString("estado"));
+                
+                // ultimo_acceso puede ser NULL
+                Timestamp ultimoAcceso = rs.getTimestamp("ultimo_acceso");
+                if (ultimoAcceso != null) {
+                    usuario.setUltimoAcceso(ultimoAcceso.toLocalDateTime());
+                }
+                
+                // fecha_creacion puede ser NULL
+                Timestamp fechaCreacion = rs.getTimestamp("fecha_creacion");
+                if (fechaCreacion != null) {
+                    usuario.setFechaCreacion(fechaCreacion.toLocalDateTime());
+                }
             }
-            // Si rs.next() es false, no hay resultados
-            // usuario seguira siendo null
 
         } catch (Exception e) {
-            // Si hay cualquier error, lo imprimimos
-            // El usuario seguira siendo null
             e.printStackTrace();
         }
 
-        // Retornamos el usuario (puede ser null si no se encontro)
+        return usuario;
+    }
+
+    /**
+     * MÉTODO ADICIONAL: Busca usuario por ID
+     * Útil para obtener datos completos después del login
+     */
+    public Usuario buscarPorId(Integer idUsuario) {
+        Usuario usuario = null;
+
+        String sql = "SELECT id_usuario, username, password_hash, rol, " +
+                     "cedula_paciente, id_odontologo, estado, " +
+                     "ultimo_acceso, fecha_creacion " +
+                     "FROM usuario WHERE id_usuario = ?";
+
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idUsuario);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                usuario = mapearUsuario(rs);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return usuario;
+    }
+
+    /**
+     * MÉTODO PRIVADO: Mapea ResultSet a Usuario
+     * Para evitar duplicar código
+     */
+    private Usuario mapearUsuario(ResultSet rs) throws Exception {
+        Usuario usuario = new Usuario();
+        
+        usuario.setIdUsuario(rs.getInt("id_usuario"));
+        usuario.setUsername(rs.getString("username"));
+        usuario.setPasswordHash(rs.getString("password_hash"));
+        usuario.setRol(rs.getString("rol"));
+        usuario.setCedulaPaciente(rs.getString("cedula_paciente"));
+        
+        int idOdontologo = rs.getInt("id_odontologo");
+        if (!rs.wasNull()) {
+            usuario.setIdOdontologo(idOdontologo);
+        }
+        
+        usuario.setEstado(rs.getString("estado"));
+        
+        Timestamp ultimoAcceso = rs.getTimestamp("ultimo_acceso");
+        if (ultimoAcceso != null) {
+            usuario.setUltimoAcceso(ultimoAcceso.toLocalDateTime());
+        }
+        
+        Timestamp fechaCreacion = rs.getTimestamp("fecha_creacion");
+        if (fechaCreacion != null) {
+            usuario.setFechaCreacion(fechaCreacion.toLocalDateTime());
+        }
+        
         return usuario;
     }
 }

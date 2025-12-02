@@ -41,6 +41,7 @@ public interface UsuarioRepository {
      * Usuario usuario = usuarioRepository.encontrarPorUsername("admin");
      * if (usuario != null) {
      *     // Usuario encontrado, verificar password
+
      *     if (PasswordUtil.checkPassword(passwordIngresado, usuario.getPasswordHash())) {
      *         // Login exitoso
      *     }
